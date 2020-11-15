@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Log;
 
-class loginController extends Controller
+class LoginController extends Controller
 {
     //
     public function login(Request $request){
-        
+        log::info("inside ady");
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required']
@@ -25,8 +25,15 @@ class loginController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect']
             ]);
+            return response()->json([
+                'status' => 0
+            ]);
         }
 
-        return $user->createToken('Auth Token')->accessToken;
+        return response()->json([
+            'token' =>  $user->createToken('Auth Token')->accessToken,
+            'role'  =>  $user->role,
+            'status' => 1
+        ]);
     }
 }
