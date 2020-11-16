@@ -25,8 +25,10 @@ Route::post('/register', 'RegisterController@register');
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/posts', 'PostController@index');
     Route::post('/posts', 'PostController@store');
-    Route::post('/posts/{post}', 'PostController@show');
+    Route::get('/posts/{post}', 'PostController@show');
     Route::post('/posts/{post}/update', 'PostController@update');
+    Route::post('/posts/{post}/comment', 'PostController@comment');
     Route::get('/logout', 'LoginController@logout');
+    Route::get('posts/{post}/like', 'PostController@like');
 });
 // Route::post('/posts', 'PostController@store');
