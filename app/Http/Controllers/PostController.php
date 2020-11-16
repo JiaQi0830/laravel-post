@@ -63,6 +63,8 @@ class PostController extends Controller
      */
     public function show($id)
     {
+        // log::info(Auth::user()->getPermissionsViaRoles());
+
         $post = Post::find($id);
         $comments = $post->comments()->get();
         $likes = $post->likes()->where('user_email', '=', Auth::user()->email)->get();
@@ -77,7 +79,9 @@ class PostController extends Controller
             'post'      =>  $post,
             'comments'  =>  $comments,
             'hasLiked'  =>  $hasLiked,
-            'totalLikes'=>  $totalLikes
+            'totalLikes'=>  $totalLikes,
+            'name'      =>  Auth::user()->name,
+            'email'     =>  Auth::user()->email
         ]);
     }
 
@@ -104,7 +108,7 @@ class PostController extends Controller
     {
         //
         $post = Post::find($id);
-
+        log::info("enter?");
         $post->title    = $request->title;
         $post->content  = $request->content;
         $post->save();
