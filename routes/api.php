@@ -19,10 +19,13 @@ use Illuminate\Support\Facades\Route;
     // return $request->user();
 // });
 
-Route::post('/login', 'LoginController@login');
-Route::post('/register', 'RegisterController@register');
 Route::get('/posts', 'PostController@index');
 Route::get('/posts/{post}', 'PostController@show');
+
+Route::middleware(['checkguest'])->group(function () {
+    Route::post('/login', 'LoginController@login');
+    Route::post('/register', 'RegisterController@register');
+});
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/logout', 'LoginController@logout');
