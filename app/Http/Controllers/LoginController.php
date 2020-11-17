@@ -26,9 +26,15 @@ class LoginController extends Controller
             ]);
         }
 
+        if($user->hasRole('admin')){
+            $role = User::ADMIN;
+        }else{
+            $role = User::USER;
+        }
+
         return response()->json([
             'token' =>  $user->createToken('Auth Token')->accessToken,
-            'role'  =>  $user->role
+            'role'  =>  $role
         ]);
     }
 

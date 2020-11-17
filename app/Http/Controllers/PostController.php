@@ -63,25 +63,27 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        // log::info(Auth::user()->getPermissionsViaRoles());
-
         $post = Post::find($id);
-        $comments = $post->comments()->get();
-        $likes = $post->likes()->where('user_email', '=', Auth::user()->email)->get();
+        $comments = $post->comments()->orderBy('created_at', 'desc')->get();
         $totalLikes = count($post->likes()->get());
+        $user = auth()->guard('api')->user();
 
-        if(count($likes)>0){
-            $hasLiked = 1;
+        if($user){
+            $likes = $post->likes()->where('user_email', '=', $user->email)->get();
+            if(count($likes)>0){
+                $hasLiked = 1;
+            }else{
+                $hasLiked = 0;
+            }
         }else{
             $hasLiked = 0;
         }
+
         return response()->json([
             'post'      =>  $post,
             'comments'  =>  $comments,
             'hasLiked'  =>  $hasLiked,
-            'totalLikes'=>  $totalLikes,
-            'name'      =>  Auth::user()->name,
-            'email'     =>  Auth::user()->email
+            'totalLikes'=>  $totalLikes
         ]);
     }
 

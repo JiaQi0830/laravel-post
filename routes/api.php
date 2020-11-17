@@ -21,17 +21,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', 'LoginController@login');
 Route::post('/register', 'RegisterController@register');
+Route::get('/posts', 'PostController@index');
+Route::get('/posts/{post}', 'PostController@show');
 
 Route::middleware(['auth:api'])->group(function () {
-        Route::get('/posts', 'PostController@index');
-        Route::get('/posts/{post}', 'PostController@show');
-        Route::post('/posts/{post}/comment', 'PostController@comment');
-        Route::get('/logout', 'LoginController@logout');
-        Route::get('posts/{post}/like', 'PostController@like')->middleware('role:user');
-        
+    Route::get('/logout', 'LoginController@logout');
+    Route::post('/posts/{post}/comment', 'PostController@comment');
+    
+    Route::middleware(['role:user'])->group(function () {
+        Route::get('posts/{post}/like', 'PostController@like');
+    });
+
     Route::middleware(['role:admin'])->group(function () {
-        Route::post('/posts', 'PostController@store');
         Route::post('/posts/{post}/update', 'PostController@update');
+        Route::post('/posts', 'PostController@store');
     });
 });
-// Route::post('/posts', 'PostController@store');
