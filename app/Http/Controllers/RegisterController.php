@@ -14,15 +14,16 @@ class RegisterController extends Controller
         $request->validate([
             'name'      => ['required'],
             'email'     => ['required', 'email', 'unique:users'],
-            'password'  => ['required', 'min:6'],
-            'role'      => ['required']
+            'password'  => ['required', 'min:6']
         ]);
         
-        User::create([
+        $user = User::create([
             'name'      => $request->name,
             'email'     => $request->email,
             'password' => Hash::make($request->password)
         ]);
+
+        $user->assignRole('user');
 
         return response()->json([
             'message' =>'Successfully registered',

@@ -28,7 +28,7 @@ class LoginController extends Controller
 
         if($user->hasRole('admin')){
             $role = User::ADMIN;
-        }else{
+        }elseif($user->hasRole('user')){
             $role = User::USER;
         }
 
