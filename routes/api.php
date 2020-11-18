@@ -36,7 +36,7 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::post('/posts/{post}/update', 'PostController@update');
-        Route::post('/posts', 'PostController@store');
+        Route::post('/posts/{post}/update', 'PostController@update')->middleware('permission:edit post');
+        Route::post('/posts', 'PostController@store')->middleware('permission:write post');
     });
 });

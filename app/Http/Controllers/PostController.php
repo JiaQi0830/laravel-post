@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Post;
 use App\Comment;
 use App\Like;
@@ -21,13 +22,12 @@ class PostController extends Controller
     {
         //
 
-        // $posts = Post::orderBy('created_at', 'desc')
-        //         ->paginate(5);
         $posts = DB::table('posts')
+                ->select('posts.id as id', 'posts.created_at', 'posts.title', 'users.name', 'users.email')
                 ->leftJoin('users', 'users.id', '=', 'posts.user_id')
                 ->orderBy('posts.created_at', 'desc')
+                ->orderBy('posts.updated_at')
                 ->paginate(5);
-        // dd($posts);
 
         return response()->json([
             'posts' =>  $posts
@@ -62,33 +62,24 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = DB::table('posts')
-        ->leftJoin('users', 'users.id', '=', 'posts.user_id')
-        ->where('posts.id', $id)
-        ->first();
-
-
-        $comments = Post::find($id)->comments()->orderBy('created_at', 'desc')->get();
-        $totalLikes = count(Post::find($id)->likes()->get());
-        $user = auth()->guard('api')->user();
-
-        if($user){
-            $likes = Post::find($id)->likes()->where('user_email', '=', $user->email)->get();
-            if(count($likes)>0){
-                $hasLiked = 1;
-            }else{
-                $hasLiked = 0;
-            }
-        }else{
-            $hasLiked = 0;
+        try{
+            $post = Post::with('users')->where('posts.id', '=', $id)->firstOrFail();
+            $comments = Post::find($id)->comments()->orderBy('created_at', 'desc')->get();
+            $totalLikes = count(Post::find($id)->likes()->get());
+            $user = auth()->guard('api')->user();
+            $hasLiked = $user ? intval(Post::find($id)->likes()->where('user_email', '=', $user->email)->exists()):0;
+            
+            return response()->json([
+                'post'      =>  $post,
+                'comments'  =>  $comments,
+                'hasLiked'  =>  $hasLiked,
+                'totalLikes'=>  $totalLikes
+            ]);
+        } catch (ModelNotFoundException $ex){
+            return response()->json(['message' => 'Post not found.'], 400);
+        } catch (Exception $ex){
+            return response()->json(['message' => 'Internal server error.'], 500);
         }
-
-        return response()->json([
-            'post'      =>  $post,
-            'comments'  =>  $comments,
-            'hasLiked'  =>  $hasLiked,
-            'totalLikes'=>  $totalLikes
-        ]);
     }
 
     /**
