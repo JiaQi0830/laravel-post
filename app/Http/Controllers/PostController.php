@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Post;
 use App\Comment;
 use App\Like;
+use DB;
 use Log;
 
 class PostController extends Controller
@@ -16,23 +17,21 @@ class PostController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $posts = Post::orderBy('created_at', 'desc')->get();
+
+        // $posts = Post::orderBy('created_at', 'desc')
+        //         ->paginate(5);
+        $posts = DB::table('posts')
+                ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+                ->orderBy('posts.created_at', 'desc')
+                ->paginate(5);
+        // dd($posts);
+
         return response()->json([
             'posts' =>  $posts
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -47,7 +46,7 @@ class PostController extends Controller
         Post::create([
             'title'     => $request->title,
             'content'   => $request->content,
-            'author'    => $request->user()->name        
+            'user_id'    => $request->user()->id
         ]);
 
         return response()->json([
@@ -63,13 +62,18 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::find($id);
-        $comments = $post->comments()->orderBy('created_at', 'desc')->get();
-        $totalLikes = count($post->likes()->get());
+        $post = DB::table('posts')
+        ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+        ->where('posts.id', $id)
+        ->first();
+
+
+        $comments = Post::find($id)->comments()->orderBy('created_at', 'desc')->get();
+        $totalLikes = count(Post::find($id)->likes()->get());
         $user = auth()->guard('api')->user();
 
         if($user){
-            $likes = $post->likes()->where('user_email', '=', $user->email)->get();
+            $likes = Post::find($id)->likes()->where('user_email', '=', $user->email)->get();
             if(count($likes)>0){
                 $hasLiked = 1;
             }else{
@@ -88,18 +92,6 @@ class PostController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-        
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -110,7 +102,6 @@ class PostController extends Controller
     {
         //
         $post = Post::find($id);
-        log::info("enter?");
         $post->title    = $request->title;
         $post->content  = $request->content;
         $post->save();

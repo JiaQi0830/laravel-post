@@ -25,7 +25,8 @@ class LoginController extends Controller
                 'email' => ['The provided credentials are incorrect']
             ]);
         }
-
+        log::info($user);
+        log::info($user->hasRole('admin'));
         if($user->hasRole('admin')){
             $role = User::ADMIN;
         }elseif($user->hasRole('user')){
