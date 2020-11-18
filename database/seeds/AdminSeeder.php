@@ -22,5 +22,7 @@ class AdminSeeder extends Seeder
         ]);
 
         $user->assignRole('admin');
+        $user->givePermissionTo('write post');
+        $user->givePermissionTo('edit post');
     }
 }

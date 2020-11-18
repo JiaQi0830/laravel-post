@@ -7,41 +7,58 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Exception;
 use Log;
 
 class LoginController extends Controller
 {
     //
     public function login(Request $request){
-        
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required']
-        ]);
-        
-        $user = User::where('email', $request->email)->first();
-        if(!$user || !Hash::check($request->password, $user->password)){
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect']
+        try{
+            
+            $validator = Validator::make($request->all(),[
+                'email' => ['required', 'email'],
+                'password' => ['required']
             ]);
-        }
-        log::info($user);
-        log::info($user->hasRole('admin'));
-        if($user->hasRole('admin')){
-            $role = User::ADMIN;
-        }elseif($user->hasRole('user')){
-            $role = User::USER;
-        }
+            
+            if($validator->fails()){
+                return response()->json([
+                    'message' => 'Invalid data',
+                    'error'   => $validator->errors()
+                ], 422);
+            }
 
-        return response()->json([
-            'token' =>  $user->createToken('Auth Token')->accessToken,
-            'role'  =>  $role
-        ]);
+            $user = User::where('email', $request->email)->first();
+            if(!$user || !Hash::check($request->password, $user->password)){
+                throw new Exception('The provided credentials are incorrect');
+            }
+            if($user->hasRole('admin')){
+                $role = User::ADMIN;
+            }elseif($user->hasRole('user')){
+                $role = User::USER;
+            }
+
+            return response()->json([
+                'message'   => 'Success',
+                'data'      => ['token' =>  $user->createToken('Auth Token')->accessToken,
+                                'role'  =>  $role]
+            ], 200);
+
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
     }
 
     public function logout(){
-        if (Auth::check()) {
+        try{
             Auth::user()->AauthAcessToken()->delete();
-         }
+            return response()->json(['message' => 'Successfully log out'], 200);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
+
     }
 }

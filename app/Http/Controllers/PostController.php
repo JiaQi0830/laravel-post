@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Post;
 use App\Comment;
 use App\Like;
+use Exception;
 use DB;
 use Log;
 
@@ -21,17 +23,22 @@ class PostController extends Controller
     public function index(Request $request)
     {
         //
+        try{
+            $posts = DB::table('posts')
+                    ->select('posts.id as id', 'posts.created_at', 'posts.title', 'users.name', 'users.email')
+                    ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+                    ->orderBy('posts.created_at', 'desc')
+                    ->orderBy('posts.updated_at')
+                    ->paginate(5);
 
-        $posts = DB::table('posts')
-                ->select('posts.id as id', 'posts.created_at', 'posts.title', 'users.name', 'users.email')
-                ->leftJoin('users', 'users.id', '=', 'posts.user_id')
-                ->orderBy('posts.created_at', 'desc')
-                ->orderBy('posts.updated_at')
-                ->paginate(5);
-
-        return response()->json([
-            'posts' =>  $posts
-        ]);
+            return response()->json([
+                'message'   => 'Success',
+                'data'      => ['posts' =>  $posts],
+            ], 200);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
     }
 
     /**
@@ -43,15 +50,35 @@ class PostController extends Controller
     public function store(Request $request)
     {
         //
-        Post::create([
-            'title'     => $request->title,
-            'content'   => $request->content,
-            'user_id'    => $request->user()->id
-        ]);
+        $user = auth()->guard('api')->user();
 
-        return response()->json([
-            'message' =>'Successfully created'
-        ]);
+        try{
+
+            $validator = Validator::make($request->all(),[
+                'title' => ['required'],
+                'content' => ['required']
+            ]);
+            
+            if($validator->fails()){
+                return response()->json([
+                    'message' => 'Invalid data',
+                    'error'   => $validator->errors()
+                ], 422);
+            }
+
+            Post::create([
+                'title'     => $request->title,
+                'content'   => $request->content,
+                'user_id'    => $request->user()->id
+            ]);
+
+            return response()->json([
+                'message' =>'Successfully created'
+            ]);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
     }
 
     /**
@@ -64,21 +91,26 @@ class PostController extends Controller
     {
         try{
             $post = Post::with('users')->where('posts.id', '=', $id)->firstOrFail();
-            $comments = Post::find($id)->comments()->orderBy('created_at', 'desc')->get();
-            $totalLikes = count(Post::find($id)->likes()->get());
+            $comments = $post->comments()->orderBy('created_at', 'desc')->get();
+            $totalLikes = count($post->likes()->get());
             $user = auth()->guard('api')->user();
-            $hasLiked = $user ? intval(Post::find($id)->likes()->where('user_email', '=', $user->email)->exists()):0;
-            
+            $hasLiked = $user ? intval($post->likes()->where('user_email', '=', $user->email)->exists()):0;
+
             return response()->json([
-                'post'      =>  $post,
-                'comments'  =>  $comments,
-                'hasLiked'  =>  $hasLiked,
-                'totalLikes'=>  $totalLikes
-            ]);
+                'message'   => 'Success',
+                'data'      => [
+                            'post'      =>  $post,
+                            'comments'  =>  $comments,
+                            'hasLiked'  =>  $hasLiked,
+                            'totalLikes'=>  $totalLikes
+                            ]
+            ],200);
+
         } catch (ModelNotFoundException $ex){
             return response()->json(['message' => 'Post not found.'], 400);
         } catch (Exception $ex){
-            return response()->json(['message' => 'Internal server error.'], 500);
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
         }
     }
 
@@ -91,15 +123,40 @@ class PostController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
-        $post = Post::find($id);
-        $post->title    = $request->title;
-        $post->content  = $request->content;
-        $post->save();
+        try{
+            
+            $validator = Validator::make($request->all(),[
+                'title' => ['required'],
+                'content' => ['required']
+            ]);
+            
+            if($validator->fails()){
+                return response()->json([
+                    'message' => 'Invalid data',
+                    'error'   => $validator->errors()
+                ], 422);
+            }
 
-        return response()->json([
-            'message' =>'Successfully updated'
-        ]);
+            $post = Post::findOrFail($id);
+            $post->title    = $request->title;
+            $post->content  = $request->content;
+            $post->save();
+            $user = auth()->guard('api')->user();
+
+            if( $post->users()->first()->email != $user->email){
+                throw new Exception('Not Author of The Post');
+            }
+
+            return response()->json([
+                'message' =>'Successfully updated'
+            ], 200);
+
+        } catch (ModelNotFoundException $ex){
+            return response()->json(['message' => 'Post not found.'], 400);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
     }
 
     /**
@@ -114,30 +171,64 @@ class PostController extends Controller
     }
 
     public function like(Request $request, $id){
-        $post = Post::find($id);
-        $likes = $post->likes()->where('user_email', '=', Auth::user()->email)->get();
-        if(count($likes)>0){
-            $post->likes()->where('user_email', '=', Auth::user()->email)->delete();
-        }else{
-            Like::create([
-                'post_id'   => $id,
-                'user'    => $request->user()->name,
-                'user_email'    => $request->user()->email,
-            ]);
+        try{
+            $post = Post::findOrFail($id);
+            $likes = $post->likes()->where('user_email', '=', Auth::user()->email)->get();
+
+            if(count($likes)>0){
+                $post->likes()->where('user_email', '=', Auth::user()->email)->delete();
+            }else{
+                Like::create([
+                    'post_id'   => $id,
+                    'user'    => $request->user()->name,
+                    'user_email'    => $request->user()->email,
+                ]);
+            }
+
+            return response()->json([
+                'message' =>'Successfully reacted'
+            ], 200);
+            
+        } catch (ModelNotFoundException $ex){
+            return response()->json(['message' => 'Post not found.'], 400);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
         }
     }
 
     public function comment(Request $request, $id){
+        try{
 
-        Comment::create([
-            'content'   => $request->content,
-            'post_id'   => $id,
-            'name'    => $request->user()->name,
-            'email'    => $request->user()->email,
-        ]);
+            $validator = Validator::make($request->all(),[
+                'content' => ['required']
+            ]);
+            
+            if($validator->fails()){
+                return response()->json([
+                    'message' => 'Invalid data',
+                    'error'   => $validator->errors()
+                ], 422);
+            }
 
-        return response()->json([
-            'message' =>'Successfully commented'
-        ]);
+            $post = Post::findOrFail($id);
+
+            Comment::create([
+                'content'   => $request->content,
+                'post_id'   => $id,
+                'name'    => $request->user()->name,
+                'email'    => $request->user()->email,
+            ]);
+
+            return response()->json([
+                'message' =>'Successfully commented'
+            ], 200);
+            
+        } catch (ModelNotFoundException $ex){
+            return response()->json(['message' => 'Post not found.'], 400);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
     }
 }

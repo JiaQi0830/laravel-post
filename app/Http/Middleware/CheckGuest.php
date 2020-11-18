@@ -17,7 +17,6 @@ class CheckGuest
      */
     public function handle($request, Closure $next)
     {
-        log::info(auth()->guard('api')->user());
         if(!auth()->guard('api')->user()){
             return $next($request);
         }
