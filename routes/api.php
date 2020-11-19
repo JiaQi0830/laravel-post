@@ -36,7 +36,8 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::post('/posts/{post}/update', 'PostController@update')->middleware(['permission:edit post']);
         Route::post('/posts', 'PostController@store')->middleware(['permission:write post']);
+        Route::post('/posts/{post}/update', 'PostController@update')->middleware(['permission:edit post']);
+        Route::get('/posts/{post}/delete', 'PostController@destroy')->middleware(['permission:delete post']);
     });
 });

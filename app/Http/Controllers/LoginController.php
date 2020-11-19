@@ -16,7 +16,6 @@ class LoginController extends Controller
     //
     public function login(Request $request){
         try{
-            
             $validator = Validator::make($request->all(),[
                 'email' => ['required', 'email'],
                 'password' => ['required']
@@ -40,7 +39,7 @@ class LoginController extends Controller
             }
 
             return response()->json([
-                'message'   => 'Success',
+                'message'   => 'Successfully login',
                 'data'      => ['token' =>  $user->createToken('Auth Token')->accessToken,
                                 'role'  =>  $role]
             ], 200);

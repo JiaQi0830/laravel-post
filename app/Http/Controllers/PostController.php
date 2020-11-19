@@ -90,19 +90,25 @@ class PostController extends Controller
     public function show($id)
     {
         try{
+            $isAuthor = 1;
             $post = Post::with('users')->where('posts.id', '=', $id)->firstOrFail();
             $comments = $post->comments()->orderBy('created_at', 'desc')->get();
             $totalLikes = count($post->likes()->get());
             $user = auth()->guard('api')->user();
             $hasLiked = $user ? intval($post->likes()->where('user_email', '=', $user->email)->exists()):0;
 
+            if($post->users()->first()->email != $user->email)
+            {
+                $isAuthor = 0;
+            }
             return response()->json([
                 'message'   => 'Success',
                 'data'      => [
                             'post'      =>  $post,
                             'comments'  =>  $comments,
                             'hasLiked'  =>  $hasLiked,
-                            'totalLikes'=>  $totalLikes
+                            'totalLikes'=>  $totalLikes,
+                            'isAuthor'  =>  $isAuthor
                             ]
             ],200);
 
@@ -168,6 +174,26 @@ class PostController extends Controller
     public function destroy($id)
     {
         //
+        try{
+            $post = Post::findOrFail($id);
+            $user = auth()->guard('api')->user();
+            if( $post->users()->first()->email != $user->email){
+                throw new Exception('Not Author of The Post');
+            }
+            
+            $post->delete();
+
+            return response()->json([
+                'message' =>'Successfully deleted'
+            ], 200);
+            
+        } catch (ModelNotFoundException $ex){
+            return response()->json(['message' => 'Post not found.'], 400);
+        } catch (Exception $ex){
+            $message = $ex->getMessage();
+            return response()->json(['message' => $message], 500);
+        }
+
     }
 
     public function like(Request $request, $id){
