@@ -85,9 +85,9 @@ class PostController extends Controller
     {
         try{
 
-            $post = Post::with('user')->where('posts.id', '=', $id)->firstOrFail();
-            $comments = $post->comments()->orderBy('created_at', 'desc')->get();
-            $totalLikes = count($post->likes()->get());
+            $post = Post::with('user')->findOrFail($id);
+            $comments = $post->comments()->latest()->get();
+            $totalLikes = $post->likes()->count();
             $user = auth()->guard('api')->user();
             $hasLiked = $user ? intval($post->likes()->where('user_email', '=', $user->email)->exists()):0;
 
@@ -133,14 +133,12 @@ class PostController extends Controller
             }
 
             $post = Post::findOrFail($id);
-            $post->title    = $request->title;
-            $post->content  = $request->content;
-            $post->save();
             $user = auth()->guard('api')->user();
-
             if( $post->user && $post->user->email != $user->email){
                 throw new Exception('Not Author of The Post');
             }
+            
+            $post->fill(['title' => $request->title, 'content' => $request->content])->save();
 
             return response()->json([
                 'message' =>'Successfully updated'
@@ -166,6 +164,7 @@ class PostController extends Controller
         try{
             $post = Post::findOrFail($id);
             $user = auth()->guard('api')->user();
+
             if( $post->user && $post->user->email != $user->email ){
                 throw new Exception('Not Author of The Post');
             }
@@ -188,10 +187,10 @@ class PostController extends Controller
     public function like(Request $request, $id){
         try{
             $post = Post::findOrFail($id);
-            $likes = $post->likes()->where('user_email', '=', Auth::user()->email)->get();
+            $like = $post->likes()->where('user_email', '=', Auth::user()->email)->first();
 
-            if(count($likes)>0){
-                $post->likes()->where('user_email', '=', Auth::user()->email)->delete();
+            if($like){
+                $like->delete();
             }else{
                 Like::create([
                     'post_id'   => $id,
