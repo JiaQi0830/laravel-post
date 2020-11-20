@@ -3,14 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\LoginRequest;
 use Exception;
-use Log;
 
 class LoginController extends Controller
 {

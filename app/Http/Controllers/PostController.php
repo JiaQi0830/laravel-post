@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Requests\CreatePostRequest;
 use App\Http\Requests\UpdatePostRequest;
@@ -13,8 +12,6 @@ use App\Post;
 use App\Comment;
 use App\Like;
 use Exception;
-use DB;
-use Log;
 
 class PostController extends Controller
 {
