@@ -2,6 +2,9 @@
 
 namespace App;
 
+use App\User;
+use App\Comment;
+use App\Like;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
@@ -10,14 +13,14 @@ class Post extends Model
     protected $guarded = [];
 
     public function comments(){
-        return $this->hasMany('App\Comment');
+        return $this->hasMany(Comment::class);
     }
 
     public function likes(){
-        return $this->hasMany('App\Like');
+        return $this->hasMany(Like::class);
     }
 
-    public function users(){
-        return $this->belongsTo('App\User', 'user_id');
+    public function user(){
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

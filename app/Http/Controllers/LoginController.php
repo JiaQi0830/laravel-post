@@ -50,7 +50,7 @@ class LoginController extends Controller
 
     public function logout(){
         try{
-            Auth::user()->AauthAcessToken()->delete();
+            Auth::user()->AauthAcessTokens()->delete();
             return response()->json(['message' => 'Successfully log out'], 200);
         } catch (Exception $ex){
             $message = $ex->getMessage();

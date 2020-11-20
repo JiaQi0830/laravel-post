@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
+use App\OauthAccessToken;
 use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
@@ -42,7 +43,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function AauthAcessToken(){
-        return $this->hasMany('\App\OauthAccessToken');
+    public function AauthAcessTokens(){
+        return $this->hasMany(OauthAccessToken::class);
     }
 }

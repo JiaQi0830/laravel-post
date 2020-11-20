@@ -27,7 +27,7 @@ class PostController extends Controller
     {
         //
         try{
-            $post = Post::with('users')->orderBy('posts.updated_at', 'desc')->paginate(5);
+            $post = Post::with('user')->orderBy('posts.updated_at', 'desc')->paginate(5);
 
             return response()->json([
                 'message'   => 'Success',
@@ -84,17 +84,15 @@ class PostController extends Controller
     public function show($id)
     {
         try{
-            $isAuthor = 1;
-            $post = Post::with('users')->where('posts.id', '=', $id)->firstOrFail();
+
+            $post = Post::with('user')->where('posts.id', '=', $id)->firstOrFail();
             $comments = $post->comments()->orderBy('created_at', 'desc')->get();
             $totalLikes = count($post->likes()->get());
             $user = auth()->guard('api')->user();
             $hasLiked = $user ? intval($post->likes()->where('user_email', '=', $user->email)->exists()):0;
 
-            if($post->users()->first()->email != $user->email)
-            {
-                $isAuthor = 0;
-            }
+            $isAuthor = intval($post->user && ($post->user->email == $user->email));
+
             return response()->json([
                 'message'   => 'Success',
                 'data'      => [
@@ -140,7 +138,7 @@ class PostController extends Controller
             $post->save();
             $user = auth()->guard('api')->user();
 
-            if( $post->users()->first()->email != $user->email){
+            if( $post->user && $post->user->email != $user->email){
                 throw new Exception('Not Author of The Post');
             }
 
@@ -168,7 +166,7 @@ class PostController extends Controller
         try{
             $post = Post::findOrFail($id);
             $user = auth()->guard('api')->user();
-            if( $post->users()->first()->email != $user->email){
+            if( $post->user && $post->user->email != $user->email ){
                 throw new Exception('Not Author of The Post');
             }
             
