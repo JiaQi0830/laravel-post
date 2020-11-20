@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Http\Requests\CreatePostRequest;
+use App\Http\Requests\UpdatePostRequest;
+use App\Http\Requests\CommentPostRequest;
 use App\Post;
 use App\Comment;
 use App\Like;
@@ -42,22 +45,18 @@ class PostController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CreatePostRequest $request)
     {
         //
         $user = auth()->guard('api')->user();
 
         try{
+            if (isset($request->validator) && $request->validator->fails()) {
+                $error = $request->validator->messages();
 
-            $validator = Validator::make($request->all(),[
-                'title' => ['required'],
-                'content' => ['required']
-            ]);
-            
-            if($validator->fails()){
                 return response()->json([
                     'message' => 'Invalid data',
-                    'error'   => $validator->errors()
+                    'error'   => $error
                 ], 422);
             }
 
@@ -122,19 +121,16 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdatePostRequest $request, $id)
     {
         try{
             
-            $validator = Validator::make($request->all(),[
-                'title' => ['required'],
-                'content' => ['required']
-            ]);
-            
-            if($validator->fails()){
+            if (isset($request->validator) && $request->validator->fails()) {
+                $error = $request->validator->messages();
+
                 return response()->json([
                     'message' => 'Invalid data',
-                    'error'   => $validator->errors()
+                    'error'   => $error
                 ], 422);
             }
 
@@ -218,17 +214,15 @@ class PostController extends Controller
         }
     }
 
-    public function comment(Request $request, $id){
+    public function comment(CommentPostRequest $request, $id){
         try{
 
-            $validator = Validator::make($request->all(),[
-                'content' => ['required']
-            ]);
-            
-            if($validator->fails()){
+            if (isset($request->validator) && $request->validator->fails()) {
+                $error = $request->validator->messages();
+
                 return response()->json([
                     'message' => 'Invalid data',
-                    'error'   => $validator->errors()
+                    'error'   => $error
                 ], 422);
             }
 

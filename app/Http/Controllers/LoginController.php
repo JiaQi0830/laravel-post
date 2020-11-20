@@ -8,23 +8,21 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\LoginRequest;
 use Exception;
 use Log;
 
 class LoginController extends Controller
 {
     //
-    public function login(Request $request){
+    public function login(LoginRequest $request){
         try{
-            $validator = Validator::make($request->all(),[
-                'email' => ['required', 'email'],
-                'password' => ['required']
-            ]);
-            
-            if($validator->fails()){
+            if (isset($request->validator) && $request->validator->fails()) {
+                $error = $request->validator->messages();
+
                 return response()->json([
                     'message' => 'Invalid data',
-                    'error'   => $validator->errors()
+                    'error'   => $error
                 ], 422);
             }
 
