@@ -87,8 +87,7 @@ class PostController extends Controller
             $totalLikes = $post->likes()->count();
             $user = auth()->guard('api')->user();
             $hasLiked = $user ? intval($post->likes()->where('user_email', '=', $user->email)->exists()):0;
-
-            $isAuthor = intval($post->user && ($post->user->email == $user->email));
+            $isAuthor = $user ? intval($post->user && ($post->user->email == $user->email)): 0;
 
             return response()->json([
                 'message'   => 'Success',
