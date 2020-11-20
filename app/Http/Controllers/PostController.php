@@ -24,16 +24,11 @@ class PostController extends Controller
     {
         //
         try{
-            $posts = DB::table('posts')
-                    ->select('posts.id as id', 'posts.created_at', 'posts.title', 'users.name', 'users.email')
-                    ->leftJoin('users', 'users.id', '=', 'posts.user_id')
-                    ->orderBy('posts.created_at', 'desc')
-                    ->orderBy('posts.updated_at')
-                    ->paginate(5);
+            $post = Post::with('users')->orderBy('posts.updated_at', 'desc')->paginate(5);
 
             return response()->json([
                 'message'   => 'Success',
-                'data'      => ['posts' =>  $posts],
+                'data'      => ['posts' =>  $post],
             ], 200);
         } catch (Exception $ex){
             $message = $ex->getMessage();
