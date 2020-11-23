@@ -48,14 +48,6 @@ class PostController extends Controller
         $user = auth()->guard('api')->user();
 
         try{
-            if (isset($request->validator) && $request->validator->fails()) {
-                $error = $request->validator->messages();
-
-                return response()->json([
-                    'message' => 'Invalid data',
-                    'error'   => $error
-                ], 422);
-            }
 
             Post::create([
                 'title'     => $request->title,
@@ -118,15 +110,6 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, $id)
     {
         try{
-            
-            if (isset($request->validator) && $request->validator->fails()) {
-                $error = $request->validator->messages();
-
-                return response()->json([
-                    'message' => 'Invalid data',
-                    'error'   => $error
-                ], 422);
-            }
 
             $post = Post::findOrFail($id);
             $user = auth()->guard('api')->user();
@@ -209,15 +192,6 @@ class PostController extends Controller
 
     public function comment(CommentPostRequest $request, $id){
         try{
-
-            if (isset($request->validator) && $request->validator->fails()) {
-                $error = $request->validator->messages();
-
-                return response()->json([
-                    'message' => 'Invalid data',
-                    'error'   => $error
-                ], 422);
-            }
 
             $post = Post::findOrFail($id);
 

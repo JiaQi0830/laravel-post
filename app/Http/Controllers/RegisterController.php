@@ -11,14 +11,6 @@ class RegisterController extends Controller
     //
     public function register(RegisterNewUserRequest $request){
         try{
-            if (isset($request->validator) && $request->validator->fails()) {
-                $error = $request->validator->messages();
-
-                return response()->json([
-                    'message' => 'Invalid data',
-                    'error'   => $error
-                ], 422);
-            }
 
             $user = User::create([
                 'name'      => $request->name,

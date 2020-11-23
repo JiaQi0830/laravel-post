@@ -20,9 +20,4 @@ class CreatePostRequest extends FormRequest
             'content' => ['required']
         ];
     }
-
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        $this->validator = $validator;
-    }
 }

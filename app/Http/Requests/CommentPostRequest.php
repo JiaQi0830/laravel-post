@@ -20,8 +20,4 @@ class CommentPostRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        $this->validator = $validator;
-    }
 }

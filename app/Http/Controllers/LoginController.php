@@ -13,14 +13,6 @@ class LoginController extends Controller
     //
     public function login(LoginRequest $request){
         try{
-            if (isset($request->validator) && $request->validator->fails()) {
-                $error = $request->validator->messages();
-
-                return response()->json([
-                    'message' => 'Invalid data',
-                    'error'   => $error
-                ], 422);
-            }
 
             $user = User::where('email', $request->email)->first();
             if(!$user || !Hash::check($request->password, $user->password)){
